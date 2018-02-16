@@ -36,7 +36,8 @@ passport.use(
     new GoogleStrategy({
         clientID: keys.googleClientID,
         clientSecret: keys.googleClientSecret,
-        callbackURL: '/auth/google/callback'
+        callbackURL: '/auth/google/callback',
+        proxy: true
         // Inside of this callback function below we are a) searching the MongoDB Collection to see if an account
         // already exists for the user attempting to login, and b) using the model class to create a new instance of
         // a user
