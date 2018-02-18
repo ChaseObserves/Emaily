@@ -40,20 +40,16 @@ passport.use(
         proxy: true
         // Inside of this callback function below we are a) searching the MongoDB Collection to see if an account
         // already exists for the user attempting to login, and b) using the model class to create a new instance of
-        // a user
-    }, (accessToken, refreshToken, profile, done) => { // GoogleStrategy callback function
-    // Mongoose Query
-        User.findOne({ googleID: profile.id }) // This initiates a search over all the users in the database to ensure that a record does not exist for them, or that no googleID matches the profile.id, which is what is returned to us from the OAuth process
-            .then((existingUser) => { // "existingUser" represents the model instance of the user who was found in the search (if one was found aka if the user does have an account)
-                if (existingUser) { // If a record does exist for the user's id, it will stop the user creation flow and log the user into its existing account
-                    // "We already have a record with the given profile ID"
-                    done(null, existingUser); // Tells Passport that we have found a user and it should now resume the auth process. First argument is an error object, second object is the user record.
-                } else { // If no record exists for the person attempting to sign in, create a new user instance for them
-                    // "We don't have a record with this ID, make a new record"
-                    new User({ googleID: profile.id }) // This code creates a new mongoose model instance of a user. It represents a single record that might exist inside our database
-                        .save() // This code then saves, or "persists" the user instance to the MongoDB database
-                        .then(user => done(null, user)); // Tells Passport that we have finished creating a user and it should now resume the auth process. Is called with the new user who was just saved 
-                }
-            })
+        // a user The "async" and "await" syntax found in this callback function is newer Javascript and replaces the
+        // ".then()" promises syntax to make it more clean and readable.
+    },
+    async (accessToken, refreshToken, profile, done) => { // GoogleStrategy callback function querying Mongoose. Arguments here come from Passport
+        const existingUser = await User.findOne({ googleID: profile.id }) // This initiates a search over all the users in the database to ensure that a record does not exist for them, or that no googleID matches the profile.id, which is what is returned to us from the OAuth process
+        if (existingUser) { // If a record does exist for the user's profile id, it will stop the user creation flow and log the user into its existing account."existingUser" represents the model instance of the user who was found in the search (if one was found aka if the user does have an account)
+            done(null, existingUser); // Tells Passport that we have found a user and it should now resume the auth process. First argument is an error object, second object is the user record.
+        } else { // If no record exists for the person (id) attempting to sign in, create a new user instance for them
+            const user = await new User({ googleID: profile.id }).save() // This code creates a new mongoose model instance of a user. It represents a single record that might exist inside our database. This code then saves, or "persists" the user instance to the MongoDB database
+            done(null, user) // Tells Passport that we have finished creating a user and it should now resume the auth process. Is called with the new user who was just saved 
+        }  
     })
 );
